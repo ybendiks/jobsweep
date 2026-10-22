@@ -19,3 +19,7 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# Private chat evaluation packets, manifests, and returned results
+evaluations/
+*.evaluations.json

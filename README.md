@@ -173,6 +173,41 @@ to `new / shortlist / applied / interview / offer / rejected / silence /
 skipped`, add notes, and it writes straight back to SQLite. A later sweep
 never clobbers a status you set.
 
+## Evaluate in ChatGPT or Claude without an AI API key
+
+Write your background and job preferences to `profile.local.md`, then run a
+normal sweep and export stored jobs together with that profile:
+
+```bash
+python jobsweep.py --export-evaluations
+python jobsweep.py --export-evaluations --export-limit 20
+```
+
+The default batch has up to 10 jobs above your keyword threshold, excluding
+skipped or already evaluated jobs. Upload the generated `evaluations/*.md`
+file to your chat assistant. It contains evaluation instructions, complete
+stored job descriptions and your profile, with a requested JSON result format.
+No AI API key or network call is needed for export/import. Apify is still used for
+normal indexed sweeps. Only upload the packet when you intend to share its
+profile and job content with your chosen chat service.
+
+Save the returned JSON in `evaluations/results.json`, then run:
+
+```bash
+python jobsweep.py --import-evaluations evaluations/results.json
+python jobsweep.py --serve
+```
+
+Keep the adjacent `.manifest.json` locally: import uses it to check the batch
+ID and every job ID. Malformed, duplicate, unknown or incomplete results are
+rejected before writing scores. Existing evaluations, application statuses and
+notes are preserved. Imported scores appear on the board, not in old digests.
+The export does not reserve jobs; importing before the next export prevents
+repeating the same unscored jobs. Set `output.evaluation_dir` to change the
+private packet/results folder; ignore any custom folder in Git as well.
+Descriptions missing from the upstream source remain missing; old truncated
+descriptions need a new sweep to refresh them. No job data is fabricated.
+
 ## Optional LLM fit scoring
 
 The built-in scorer is keyword-based: fast, free, runs on everything, and

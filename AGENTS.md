@@ -210,6 +210,17 @@ Verify with `crontab -l`, and the next morning check `sweep.log` and
 `digests/`. On macOS, if the log shows a permission error, give `cron` Full
 Disk Access in System Settings → Privacy & Security.
 
+## Optional — manual chat evaluation (no AI API key)
+
+After a sweep, `python jobsweep.py --export-evaluations` writes a private
+Markdown packet with instructions, up to ten qualifying unscored jobs and the
+candidate profile. Upload that packet to the chosen chat assistant; save its
+JSON reply in `evaluations/results.json`. Run
+`python jobsweep.py --import-evaluations evaluations/results.json`, then open
+the board with `--serve`. Keep the adjacent manifest locally for validation.
+No AI API call is made. Do not commit evaluation packets, manifests or results.
+Use `python tests_manual_evaluate.py` for offline round-trip checks.
+
 ## Optional — LLM fit scoring
 
 `--evaluate` sends postings that cleared the keyword bar, plus the user's

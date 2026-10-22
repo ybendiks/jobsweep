@@ -132,6 +132,8 @@ output:
   # (OneDrive/Dropbox) or a network share, point this at a local path.
   db: jobsweep.sqlite3
   digest_dir: digests
+  # Private chat evaluation packets, local manifests and returned results.
+  evaluation_dir: evaluations
 
 # ─────────────────────────────────────────────────────────────────────────
 # config.local.yaml — gitignored, merged over this file. Put the real search

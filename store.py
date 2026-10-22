@@ -103,7 +103,7 @@ def upsert(conn, job, status: str = "new") -> bool:
                WHERE uid=?""",
             (job.score, json.dumps(job.reasons), job.location, job.salary,
              job.arrangement, job.experience, job.posted_at,
-             job.description[:8000], job.uid),
+             job.description, job.uid),
         )
         return False
     conn.execute(
@@ -113,7 +113,7 @@ def upsert(conn, job, status: str = "new") -> bool:
            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (job.uid, job.title, job.company, job.location, job.url, job.ats,
          job.track, job.posted_at, job.arrangement, job.experience, job.salary,
-         job.score, json.dumps(job.reasons), job.description[:8000], now,
+         job.score, json.dumps(job.reasons), job.description, now,
          status),
     )
     return True

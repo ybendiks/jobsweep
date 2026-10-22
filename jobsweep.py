@@ -176,7 +176,7 @@ class IndexedSource:
             url=url,
             ats=str(row.get("source") or "indexed"),
             posted_at=str(row.get("date_posted") or ""),
-            description=str(row.get("description_text") or "")[:4000],
+            description=str(row.get("description_text") or ""),
             arrangement=str(row.get("ai_work_arrangement") or ""),
             experience=str(row.get("ai_experience_level") or ""),
             salary=salary,
@@ -266,7 +266,7 @@ class DirectSource:
                 url=url, ats="greenhouse",
                 posted_at=j.get("first_published", "") or j.get("updated_at", ""),
                 description=re.sub(r"<[^>]+>", " ",
-                                   j.get("content") or "")[:4000],
+                                   j.get("content") or ""),
             ))
         return out
 
@@ -286,7 +286,7 @@ class DirectSource:
                     datetime.fromtimestamp(ts / 1000, timezone.utc).isoformat()
                     if ts else ""
                 ),
-                description=(j.get("descriptionPlain") or "")[:4000],
+                description=(j.get("descriptionPlain") or ""),
             ))
         return out
 
@@ -304,7 +304,7 @@ class DirectSource:
                 uid=make_uid(slug, title, url), title=title, company=slug,
                 location=j.get("location", "—"), url=url, ats="ashby",
                 posted_at=j.get("publishedAt", ""),
-                description=(j.get("descriptionPlain") or "")[:4000],
+                description=(j.get("descriptionPlain") or ""),
             ))
         return out
 
@@ -724,18 +724,25 @@ def deep_merge(base: dict, over: dict) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--dry-run", action="store_true",
+    actions = ap.add_mutually_exclusive_group()
+    actions.add_argument("--export-evaluations", action="store_true",
+                         help="export stored jobs and profile for manual chat evaluation")
+    actions.add_argument("--import-evaluations", metavar="RESULTS_JSON",
+                         help="import chat evaluations matched to an exported batch")
+    ap.add_argument("--export-limit", type=int, default=10,
+                    help="maximum jobs in an evaluation packet (default: 10)")
+    actions.add_argument("--dry-run", action="store_true",
                     help="fetch and score, but write neither the database nor "
                          "the digest")
     ap.add_argument("--local", help="override file merged over --config "
                                     "(default: config.local.yaml if present)")
-    ap.add_argument("--serve", action="store_true",
+    actions.add_argument("--serve", action="store_true",
                     help="open the local review board instead of sweeping")
     ap.add_argument("--port", type=int, default=8765, help="port for --serve")
-    ap.add_argument("--evaluate", action="store_true",
+    actions.add_argument("--evaluate", action="store_true",
                     help="LLM fit-score the postings that cleared the keyword "
                          "bar (needs ANTHROPIC_API_KEY)")
-    ap.add_argument("--explain", action="store_true",
+    actions.add_argument("--explain", action="store_true",
                     help="audit your term lists against the postings already "
                          "swept; run this after editing any term list")
     ap.add_argument("--evaluate-limit", type=int, default=15,
@@ -759,6 +766,17 @@ def main() -> None:
         print(f"merged overrides from {local}")
 
     db = (cfg.get("output") or {}).get("db", "jobsweep.sqlite3")
+
+    if args.export_evaluations or args.import_evaluations:
+        import manual_evaluate
+        try:
+            if args.export_evaluations:
+                manual_evaluate.export_packet(cfg, db, args.export_limit)
+            else:
+                manual_evaluate.import_results(cfg, db, args.import_evaluations)
+        except (ValueError, OSError) as exc:
+            sys.exit(f"Evaluation file error: {exc}")
+        return
 
     if args.serve:
         import dashboard
