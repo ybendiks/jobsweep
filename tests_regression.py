@@ -156,5 +156,22 @@ check('"*" alone matches nothing', not js._has("*","anything at all"))
 check('"intern" still does not match "international"', not js._has("intern","director, international seo"))
 check('"intern" still matches "intern"', js._has("intern","marketing intern"))
 
+print("\nGreenhouse description decoding")
+from unittest.mock import Mock, patch
+for content, expected in [
+    ("&lt;p&gt;Growth &amp;amp; marketing&lt;/p&gt;", "Growth & marketing"),
+    ("<p>Growth &amp; marketing</p>", "Growth & marketing"),
+    (None, ""),
+]:
+    response = Mock()
+    response.json.return_value = {"jobs": [{
+        "id": 123, "title": "Marketing Manager", "company_name": "Example",
+        "absolute_url": "https://example.com/jobs/123", "content": content,
+    }]}
+    with patch.object(js.requests, "get", return_value=response):
+        job = js.DirectSource({})._greenhouse("example")[0]
+    check(f"Greenhouse decodes {content!r}",
+          job.description.strip() == expected, repr(job.description))
+
 print(f"\n{P} passed, {F} failed")
 sys.exit(1 if F else 0)

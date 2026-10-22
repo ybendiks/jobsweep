@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import functools
 import hashlib
+import html
 import os
 import re
 import sys
@@ -265,8 +266,11 @@ class DirectSource:
                 location=((j.get("location") or {}).get("name") or "—"),
                 url=url, ats="greenhouse",
                 posted_at=j.get("first_published", "") or j.get("updated_at", ""),
-                description=re.sub(r"<[^>]+>", " ",
-                                   j.get("content") or "")[:4000],
+                # Greenhouse may HTML-escape the markup itself. Decode it
+                # before stripping tags, then decode remaining text entities.
+                description=html.unescape(re.sub(
+                    r"<[^>]+>", " ", html.unescape(j.get("content") or "")
+                ))[:4000],
             ))
         return out
 
